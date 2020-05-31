@@ -9,47 +9,6 @@ import (
 
 /*
 LevelReadCommitted
-没有脏读
-
-*/
-func TestReadCommittedNoDirtyRead(t *testing.T) {
-
-	DB.Delete(&Transaction1{})
-	DB.Create(&Transaction1{ID: 1, Username: `123`})
-
-	////////////////////////////////////////////////////////
-	tx2 := DB.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-
-	log.Println(`tx2 begin`)
-
-	var tran2 Transaction1
-	tx2.First(&tran2, 1)
-	log.Println(`tx2 read.  tran2: `, tran2)
-
-	//////////////////////////////////////////////////////////c//////////////////////////////////////////////////////
-
-	tx1 := DB.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-	log.Println(`tx1 begin`)
-
-	var tran Transaction1
-	tran.ID = 1
-
-	m := map[string]interface{}{
-		`username`: `333`,
-	}
-
-	tx1.Model(&tran).Updates(m)
-	log.Println(`tx1 update `)
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	tran2 = Transaction1{}
-	tx2.First(&tran2, 1)
-	log.Println(`tx2 read.  tran2: `, tran2)
-
-}
-
-/*
-LevelReadCommitted
 没有脏写
 如果第一个事务写第一个key ， 还没提交或回滚， 第二个事务 不让写， 防止脏写
 */
@@ -88,6 +47,47 @@ func TestReadCommittedNoDirtyWrite(t *testing.T) {
 	var beans []Transaction1
 	DB.Find(&beans)
 	log.Println(`beans `, beans)
+
+}
+
+/*
+LevelReadCommitted
+没有脏读
+
+*/
+func TestReadCommittedNoDirtyRead(t *testing.T) {
+
+	DB.Delete(&Transaction1{})
+	DB.Create(&Transaction1{ID: 1, Username: `123`})
+
+	////////////////////////////////////////////////////////
+	tx2 := DB.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+
+	log.Println(`tx2 begin`)
+
+	var tran2 Transaction1
+	tx2.First(&tran2, 1)
+	log.Println(`tx2 read.  tran2: `, tran2)
+
+	//////////////////////////////////////////////////////////c//////////////////////////////////////////////////////
+
+	tx1 := DB.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelReadCommitted})
+	log.Println(`tx1 begin`)
+
+	var tran Transaction1
+	tran.ID = 1
+
+	m := map[string]interface{}{
+		`username`: `333`,
+	}
+
+	tx1.Model(&tran).Updates(m)
+	log.Println(`tx1 update `)
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	tran2 = Transaction1{}
+	tx2.First(&tran2, 1)
+	log.Println(`tx2 read.  tran2: `, tran2)
 
 }
 
